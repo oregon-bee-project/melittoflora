@@ -11,6 +11,15 @@
     margin-bottom: 5px;
 }
 
+body {
+    font-size: unset;
+    line-height: unset;
+}
+
+html {
+    font-size: unset;
+}
+
 #content-main {
     margin-top: 6px;
     margin-left: 15px;
@@ -23,6 +32,10 @@
 
 .imerss-filters:first-child {
     margin-top: -3px;
+}
+
+.imerss-filters {
+    width: 23em;
 }
 
 .imerss-record-reporter {

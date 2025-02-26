@@ -179,7 +179,7 @@ hortis.beaVizLoader.hideLoadingIndicator = function () {
 fluid.defaults("hortis.fullScreenControl", {
     gradeNames: "fluid.viewComponent",
     members: {
-        enabled: "@expand:signal(false)",
+        enabled: "@expand:signal()",
         fullScreenEffect: "@expand:fluid.effect(hortis.fullScreenEffect, {that}.enabled, {that}.options.fullScreenElement)"
     },
     listeners: {

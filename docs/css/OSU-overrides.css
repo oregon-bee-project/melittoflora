@@ -1,8 +1,8 @@
 #navbar {
     width: 100%;
     /** Weird height definitions are required to reduce jank on startup - perhaps viz content is oversized **/
-    min-height: 168px;
-    max-height: 168px;
+    min-height: 130px;
+    max-height: 130px;
     display: flex;
     flex-direction: column;
 }
@@ -17,10 +17,27 @@
     margin-right: 15px;
 }
 
+.imerss-filter-panel {
+    padding-top: 0;
+}
+
+.imerss-filters:first-child {
+    margin-top: -3px;
+}
+
+.imerss-record-reporter {
+    padding-top: 0;
+}
+
 /** Override bogus definition from OSU core styles */
 
 input[type="radio"], input[type="checkbox"] {
     margin: 0;
+}
+
+label {
+    display: revert;
+    font-weight: revert;
 }
 
 @font-face {

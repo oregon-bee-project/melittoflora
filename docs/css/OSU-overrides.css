@@ -7,6 +7,14 @@
     flex-direction: column;
 }
 
+/** This is the cutpoint taken from OSU.css **/
+@media screen and (max-width: 1020px) {
+    #navbar {
+        min-height: 202px;
+        max-height: 202px;
+    }
+}
+
 .breadcrumb {
     margin-bottom: 5px;
 }
@@ -24,6 +32,7 @@ html {
     margin-top: 6px;
     margin-left: 15px;
     margin-right: 15px;
+    height: 100%;
 }
 
 .imerss-filter-panel {

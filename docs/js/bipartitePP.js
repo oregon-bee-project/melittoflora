@@ -115,6 +115,8 @@ imerss.bipartitePP = function (data, svg, width, height, options) { // eslint-di
 
     svg.html("");
 
+    svg.append("rect").attr("width", "100%").attr("height", "100%").attr("fill", "white");
+
     const g1 = svg.append("g").attr("transform", `translate(${ColPos},${RowPos})`);
 
     const bp1 = viz.bP()
@@ -129,6 +131,12 @@ imerss.bipartitePP = function (data, svg, width, height, options) { // eslint-di
         .orient(Orientation)
         .sortPrimary(sort(sortedBeeNames))
         .sortSecondary(sort(sortedPlantNames));
+
+    // const {mouseover, mouseout} = bp1;
+
+    // Defeat mouse interaction as per https://github.com/usda-nifa-b-team/b-team/issues/21
+    delete bp1.mouseover;
+    delete bp1.mouseout;
 
     g1.call(bp1); g1.append("text")
         .attr("x", 17.5).attr("y", -8)
@@ -161,25 +169,6 @@ imerss.bipartitePP = function (data, svg, width, height, options) { // eslint-di
             })
             .attr("text-anchor", d => (d.part === "primary" ? "end" : "start"));
     }
-
-    // none of below needs modification either unless we get into more than one facet
-    function mouseover(d) {
-        bp1.mouseover(d);
-        g1.selectAll(".mainBars")
-            .select(".lab")
-            .text(function (d) { return (d.value);});
-    }
-
-    function mouseout(d) {
-        bp1.mouseout(d);
-        g1.selectAll(".mainBars")
-            .select(".lab")
-            .text(function (d) { return (d.value);});
-    }
-
-    g1.selectAll(".mainBars") // no changes
-        .on("mouseover", mouseover)
-        .on("mouseout", mouseout);
 
     return {
         renderedWidth: MainFigSizeX + LeftSidePadding + RightSidePadding - BarWidth,

@@ -42,6 +42,16 @@
     top: 7px;
 }
 
+/** Account for slightly higher base font */
+
+.imerss-checklist .pretty {
+    line-height: 1;
+}
+
+.pretty {
+    line-height: 0.95;
+}
+
 /** Override boguss definition from OSU core styles */
 
 input[type="radio"], input[type="checkbox"] {

@@ -24,17 +24,12 @@ fluid.defaults("hortis.beaVizLoader", {
         collectorReport: ".imerss-collector-report"
     },
     members: {
-        rendered: "@expand:signal()",
-        idle: "@expand:signal(true)",
-        filteredObs: "{filters}.allOutput",
+        filteredObs: "{obsFilters}.allOutput",
         taxaFromObs: "@expand:fluid.computed(hortis.twoTaxaFromObs, {that}.filteredObs, {taxa}.rowById)",
         allTaxaFromObs: "@expand:fluid.computed(hortis.twoTaxaFromObs, {that}.obsRows, {taxa}.rowById)",
         // Funny hack since this is computed in an effect by interactions - review this
         finalFilteredObs: "@expand:signal()",
         hideLoadingIndicator: "@expand:fluid.effect(hortis.beaVizLoader.hideLoadingIndicator, {that}.rendered)"
-
-        //`@expand:fluid.computed(hortis.filterObsByTwoTaxa, {that}.filteredObs,
-        //    {plantChecklist}.rowFocus, {pollChecklist}.rowFocus)`
     },
     components: {
         regionIndirection: {
@@ -48,7 +43,7 @@ fluid.defaults("hortis.beaVizLoader", {
             container: "{that}.dom.collectorReport",
             options: {
                 members: {
-                    collectorName: "{filters}.collectorFilter.filterState"
+                    collectorName: "{obsFilters}.collectorFilter.filterState"
                 }
             }
         },
@@ -66,7 +61,7 @@ fluid.defaults("hortis.beaVizLoader", {
                 }
             }
         },
-        filters: {
+        obsFilters: {
             type: "hortis.bbeaFilters",
             container: "{that}.dom.filters",
             options: {
@@ -81,7 +76,7 @@ fluid.defaults("hortis.beaVizLoader", {
             type: "hortis.checklist.withHolder",
             container: ".imerss-pollinators",
             options: {
-                gradeNames: ["hortis.checklist.withOBA", "hortis.checklist.withCopy"],
+                gradeNames: ["hortis.checklist.withOBA", "hortis.checklist.withDownload", "hortis.checklist.withSearch"],
                 rootId: 1,
                 filterRanks: ["epifamily", "family", "tribe", "genus", "subgenus", "species"],
                 disclosableRanks: ["tribe", "genus", "subgenus", "species"],
@@ -89,6 +84,7 @@ fluid.defaults("hortis.beaVizLoader", {
                 selectable: true,
                 unfoldable: true,
                 copyButtonMessage: "Copy %rows bee taxa to clipboard",
+                searchControlId: "fli-imerss-bee-search",
                 members: {
                     rowById: "{taxa}.rowById",
                     rowFocus: "@expand:fluid.derefSignal({vizLoader}.taxaFromObs, pollRowFocus)"
@@ -103,7 +99,7 @@ fluid.defaults("hortis.beaVizLoader", {
             type: "hortis.checklist.withHolder",
             container: ".imerss-plants",
             options: {
-                gradeNames: ["hortis.checklist.withOBA", "hortis.checklist.withCopy"],
+                gradeNames: ["hortis.checklist.withOBA", "hortis.checklist.withDownload", "hortis.checklist.withSearch"],
                 rootId: 47126,
                 filterRanks: ["kingdom", "order", "family", "genus"],
                 disclosableRanks: ["family", "genus"],
@@ -111,6 +107,7 @@ fluid.defaults("hortis.beaVizLoader", {
                 selectable: true,
                 unfoldable: true,
                 copyButtonMessage: "Copy %rows plant taxa to clipboard",
+                searchControlId: "fli-imerss-plant-search",
                 members: {
                     rowById: "{taxa}.rowById",
                     rowFocus: "@expand:fluid.derefSignal({vizLoader}.taxaFromObs, plantRowFocus)"
@@ -221,7 +218,7 @@ fluid.defaults("hortis.collectorReportLinker", {
         collectorLinkValid: "@expand:signal(false)",
         // Prime case for "&" syntax ?
         checkCollectorLinkValid: "@expand:fluid.effect(hortis.collectorReportLinker.checkLinkValid, {that}.collectorName, {that}.collectorLink, {that})",
-        showControl: "@expand:fluid.effect(hortis.toggleClass, {that}.container.0, imerss-hidden, {that}.collectorLinkValid, true)",
+        showControl: "@expand:fluid.effect(hortis.toggleClass, {that}.container.0, fl-hidden, {that}.collectorLinkValid, true)",
         renderModel: "@expand:fluid.computed(hortis.collectorReportLinker.renderModel, {that}.collectorName, {that}.collectorLink, {that}.options.markup.linkText)"
     }
 });
@@ -355,10 +352,11 @@ hortis.ancestorHitCache = function (selection, rowById) {
         taxonToAncestor,
         get: function (taxonId) {
             const existing = taxonToAncestor[taxonId];
-            if (existing) {
+            if (existing !== undefined) {
                 return existing;
             } else {
-                const row = rowById[taxonId];
+                // eslint-disable-next-line eqeqeq
+                const row = taxonId == 0 ? hortis.checklist.NO_TAXON_ROW : rowById[taxonId];
                 const computed = hortis.findAncestor(row, selection);
                 taxonToAncestor[taxonId] = computed;
                 return computed;
@@ -367,10 +365,18 @@ hortis.ancestorHitCache = function (selection, rowById) {
     };
 };
 
+/** Count plant-pollinator interactions for the current taxonomic selection
+ *
+ * @param {hortis.interactions} that - The interactions component
+ * @param {obsRow[]} rows - The full set of observation rows
+ * @param {Object<key, true>} plantSelection - The currently selected plant taxa
+ * @param {Object<key, true>} pollSelection - The currently selected pollinator taxa
+ * @return {Object<int, int>} - Hash bins keyed by integer cross key to interaction count.
+ */
 hortis.interactions.count = function (that, rows, plantSelection, pollSelection) {
     const rowById = that.rowById.peek();
-    const allSelection = {...plantSelection, ...pollSelection};
-    const ancestorCache = hortis.ancestorHitCache(allSelection, rowById);
+    const plantCache = hortis.ancestorHitCache(plantSelection, rowById);
+    const pollCache = hortis.ancestorHitCache(pollSelection, rowById);
 
     const crossTable = {};
     const plantCounts = {counts: {}, max: 0};
@@ -386,8 +392,8 @@ hortis.interactions.count = function (that, rows, plantSelection, pollSelection)
         rows.forEach(function (row) {
             const {pollinatorINatId: pollId, plantINatId: plantId} = row;
             if (plantId && pollId) {
-                const plantCountKey = ancestorCache.get(plantId);
-                const pollCountKey = ancestorCache.get(pollId);
+                const plantCountKey = plantCache.get(plantId);
+                const pollCountKey = pollCache.get(pollId);
                 if (plantCountKey && pollCountKey) {
                     const key = hortis.intIdsToKey(plantCountKey, pollCountKey);
 
@@ -436,7 +442,7 @@ hortis.plantColours = {
 };
 
 hortis.computeRankColours = function (selection, colourIndex, idToEntry) {
-    const entries = Object.keys(selection).map(id => idToEntry[id]);
+    const entries = Object.keys(selection).map(id => idToEntry[id]).filter(entry => entry);
     const rows = entries.sort((a, b) => a.index - b.index).map(entry => entry.row);
     const colourEntries = rows.map(row => {
         let togo = [row.iNaturalistTaxonName, null];
@@ -457,7 +463,8 @@ hortis.computeRankColours = function (selection, colourIndex, idToEntry) {
 fluid.defaults("hortis.bipartite", {
     gradeNames: "fluid.viewComponent",
     selectors: {
-        svg: "svg"
+        svg: "svg",
+        downloadButton: ".imerss-download-button"
     },
     members: {
         bipartiteRows: "@expand:signal()",
@@ -470,7 +477,8 @@ fluid.defaults("hortis.bipartite", {
         render: "@expand:fluid.effect(hortis.bipartite.render, {that}, {that}.dom.svg.0, {that}.containerWidth, {that}.bipartiteRows, {that}.beeIdToEntry, {that}.plantIdToEntry)"
     },
     listeners: {
-        "onCreate.listenWidth": "hortis.bipartite.listenWidth({that}.container.0, {that}.containerWidth)"
+        "onCreate.listenWidth": "hortis.bipartite.listenWidth({that}.container.0, {that}.containerWidth)",
+        "onCreate.downloadButton": "hortis.bipartite.downloadButton({that}, {that}.dom.downloadButton, {that}.dom.svg)"
     }
 });
 
@@ -486,6 +494,63 @@ hortis.bipartite.listenWidth = function (containerNode, widthSignal) {
     observer.observe(containerNode);
 };
 
+// This gets injected into a rendered bipartite diagram - keep in step with imerss-bbea.css etc.
+hortis.bipartite.css = `
+<style>
+    svg {
+        font-size: 14px;
+        font-family: Arial,Helvetica,sans-serif;
+    }
+    .bipartite-label {
+        font-size: 18px;
+        font-weight: 500;
+    }
+</style>
+`;
+
+
+hortis.loadImage = async url => {
+    const $img = document.createElement("img");
+    $img.src = url;
+    return new Promise((resolve) => {
+        $img.onload = () => resolve($img);
+        $img.onerror = e => {
+            console.log("Got error ", e);
+        };
+        $img.src = url;
+    });
+};
+
+hortis.getCanvasBlob = async (svgURL, { format, quality, scale }) => {
+    const img = await hortis.loadImage(svgURL);
+
+    const $canvas = document.createElement("canvas");
+    $canvas.width = img.naturalWidth * scale;
+    $canvas.height = img.naturalHeight * scale;
+    $canvas.getContext("2d").drawImage(img, 0, 0, img.naturalWidth * scale, img.naturalHeight * scale);
+
+    const blob = await new Promise(resolve => $canvas.toBlob(resolve, `image/${format}`, quality));
+    return blob;
+};
+
+function injectSvgStyle(svgText, style) {
+    return svgText.replace(/(<svg[^>]*>)/, `$1${style}`);
+}
+
+hortis.bipartite.downloadButton = function (bipartite, button, svg) {
+    button.on("click", async () => {
+        const dataHeader = "data:image/svg+xml;charset=utf-8";
+        const serializeAsXML = $e => (new XMLSerializer()).serializeToString($e);
+        const encodeAsUTF8 = s => {
+            return `${dataHeader},${encodeURIComponent(injectSvgStyle(s, hortis.bipartite.css))}`;
+        };
+        const $svg = svg[0];
+        const svgURL = encodeAsUTF8(serializeAsXML($svg));
+
+        const blob = await hortis.getCanvasBlob(svgURL, {format: "png", scale: 4});
+        hortis.triggerDownload(blob, "image/png", "bipartite.png");
+    });
+};
 
 hortis.bipartite.render = function (that, svgNode, containerWidth, bipartiteRows, beeIdToEntry, plantIdToEntry) {
     const svg = d3.select(svgNode);
@@ -634,7 +699,8 @@ hortis.drawInteractions.render = function (that, interactions, crossTable, rowBy
     const now = Date.now();
 
     const filterZero = function (taxonIds, counts) {
-        fluid.remove_if(taxonIds, id => counts[id] === undefined);
+        // eslint-disable-next-line eqeqeq
+        fluid.remove_if(taxonIds, id => counts[id] === undefined || id == 0);
         taxonIds.sort((ea, eb) => counts[eb] - counts[ea]);
     };
 
@@ -682,7 +748,9 @@ hortis.drawInteractions.render = function (that, interactions, crossTable, rowBy
 
         const plantRow = rowById[plantId];
         const pollRow = rowById[pollId];
-        bipartiteRows.push([pollRow.iNaturalistTaxonName, plantRow.iNaturalistTaxonName, count]);
+        if (plantRow && pollRow) {
+            bipartiteRows.push([pollRow.iNaturalistTaxonName, plantRow.iNaturalistTaxonName, count]);
+        }
     });
 
     const delay = Date.now() - now;
@@ -867,7 +935,10 @@ fluid.defaults("hortis.bbeaLibreMap", {
         obsQuantiser: {
             type: "hortis.obsQuantiser",
             options: {
-                gradeNames: "hortis.bbeaObsQuantiser"
+                gradeNames: "hortis.bbeaObsQuantiser",
+                members: {
+                    baseLatitude: "@expand:signal(44)"
+                }
             }
         }
     }
@@ -901,7 +972,7 @@ hortis.renderBbeaGridTooltip = function (that, grid, rowById, cellId) {
 };
 
 fluid.defaults("hortis.sexFilter", {
-    gradeNames: ["hortis.filter", "fluid.stringTemplateRenderingView"],
+    gradeNames: ["hortis.obsFilter", "fluid.stringTemplateRenderingView"],
     markup: {
         container: `
         <div class="imerss-sex-filter">
@@ -1136,7 +1207,7 @@ hortis.bbeaFiltersTemplate = `
             <div class="imerss-filter-title">Filter by region:</div>
             <div class="imerss-free-region-filter-holder">
                 <input class="imerss-free-region-input autocomplete__input autocomplete__input--default" aria-autocomplete="list" autocomplete="off" placeholder="" type="text" role="combobox" spellcheck="false">
-                <div class="imerss-filter-clear imerss-basic-tooltip imerss-hidden" title="Reset this filter"><svg width="24" height="24">
+                <div class="imerss-filter-clear imerss-basic-tooltip fl-hidden" title="Reset this filter"><svg width="24" height="24">
                        <use href="#x-circle-close" />
                     </svg>
                 </div>
@@ -1150,7 +1221,7 @@ hortis.bbeaFiltersTemplate = `
 `;
 
 fluid.defaults("hortis.bbeaFilters", {
-    gradeNames: ["hortis.filters", "fluid.stringTemplateRenderingView"],
+    gradeNames: ["hortis.obsFilters", "fluid.stringTemplateRenderingView"],
     markup: { // Clearly unsatisfactory, have to move over to preactish rendering before long
         container: hortis.bbeaFiltersTemplate,
         fallbackContainer: hortis.bbeaFiltersTemplate

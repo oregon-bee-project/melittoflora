@@ -32,7 +32,7 @@ body {
 
 /** Quick hack to deal with the fact we can't quickly suppress spacing for non-unfoldable root */
 .imerss-checklist {
-    margin-left: -20px;
+    margin-left: -10px;
 }
 
 .checklist-rank-order > p {
@@ -185,10 +185,6 @@ body {
 }
 
 
-.imerss-collector-report.imerss-hidden {
-    display: none;
-}
-
 .imerss-sex-filter-checks {
     display: flex;
     flex-direction: row;
@@ -233,10 +229,17 @@ body {
     height: 100%;
     width: 100%;
     font-size: 14px;
+    position: relative;
 }
 
 .imerss-bipartite svg {
     display: block;
+}
+
+.imerss-bipartite .imerss-download-button {
+    position: absolute;
+    top: 0;
+    right: 0;
 }
 
 .bipartite-label {
@@ -300,6 +303,15 @@ body {
     position: absolute;
     bottom: -16px;
     right: 6px;
+}
+
+.imerss-software-version {
+    display: flex;
+    justify-content: start;
+    font-size: small;
+    position: absolute;
+    bottom: -16px;
+    left: 6px;
 }
 
 /* Bee loading indicator adapted from https://codepen.io/Huyyy/pen/mdymXBr */

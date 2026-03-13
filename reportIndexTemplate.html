@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melittoflora Volunteers' Report Index</title>
+    <style>
+        /* ── Reset & base ─────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ink:       #1a1a2e;
+            --paper:     #f5f2eb;
+            --rule:      #c8bfaa;
+            --accent:    #2d5a8e;
+            --accent-lt: #e8f0f9;
+            --link:      #1e4d7b;
+            --hover:     #c0392b;
+            --font-head: "Georgia", "Times New Roman", serif;
+            --font-body: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+            --font-mono: "Courier New", monospace;
+        }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            line-height: 1.7;
+            padding: 0;
+        }
+
+        /* ── Header ───────────────────────────────────── */
+        header {
+            background: var(--ink);
+            color: var(--paper);
+            padding: 2.5rem 2rem 2rem;
+            border-bottom: 4px solid var(--accent);
+        }
+
+        header h1 {
+            font-family: var(--font-head);
+            font-size: 2rem;
+            font-weight: normal;
+            letter-spacing: 0.04em;
+        }
+
+        header p {
+            margin-top: 0.4rem;
+            font-size: 0.9rem;
+            opacity: 0.65;
+            font-family: var(--font-mono);
+        }
+
+        /* ── Navigation ───────────────────────────────── */
+        nav {
+            background: var(--accent);
+            padding: 0.6rem 2rem;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-family: var(--font-head);
+            font-size: 0.9rem;
+            letter-spacing: 0.03em;
+            opacity: 0.85;
+            transition: opacity 0.15s;
+        }
+
+        nav a:hover { opacity: 1; text-decoration: underline; }
+
+        /* ── Main content ─────────────────────────────── */
+        main {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 2rem 4rem;
+        }
+
+        /* ── Sections ─────────────────────────────────── */
+        section {
+            margin-top: 3rem;
+        }
+
+        section:first-child { margin-top: 2rem; }
+
+        h2 {
+            font-family: var(--font-head);
+            font-size: 1.4rem;
+            font-weight: normal;
+            color: var(--accent);
+            border-bottom: 1px solid var(--rule);
+            padding-bottom: 0.4rem;
+            margin-bottom: 1rem;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── Tables ───────────────────────────────────── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        thead tr {
+            background: var(--ink);
+            color: var(--paper);
+        }
+
+        thead th {
+            padding: 0.55rem 0.9rem;
+            text-align: left;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: normal;
+        }
+
+        tbody tr:nth-child(even) { background: var(--accent-lt); }
+        tbody tr:hover { background: #dce8f5; }
+
+        tbody td {
+            padding: 0.5rem 0.9rem;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        tbody td:first-child { font-weight: bold; }
+        tbody td:nth-child(2) {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        /* ── Links ────────────────────────────────────── */
+        a {
+            color: var(--link);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--hover);
+            text-decoration: underline;
+        }
+
+        /* ── Footer ───────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #888;
+            border-top: 1px solid var(--rule);
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Melittoflora Volunteers' Report Index</h1>
+        <p>Generated {{date}}</p>
+    </header>
+
+    <nav>
+        {{navLinks}}
+    </nav>
+
+    <main>
+        {{sections}}
+    </main>
+
+</body>
+</html>
